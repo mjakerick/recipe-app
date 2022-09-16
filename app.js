@@ -1,13 +1,13 @@
-const meals = document.getElementById('meals');
+const meals = document.getElementById("meals");
+const favoriteContainer = document.getElementById("fav-meals")
 
 getRandomMeal();
+fetchFavMeals();
 
 async function getRandomMeal() {
   const resp = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
   const respData = await resp.json();
   const randomMeal = respData.meals[0];
-
-  // console.log(randomMeal);
 
   addMeal(randomMeal, true);
 }
@@ -16,7 +16,6 @@ async function getMealById(id) {
   const resp = await fetch('https://www.themealdb.com/api/json/v1/1/lookup.php?i=' + id);
 
   const respData = await resp.json();
-
   const meal = respData.meals[0];
 
   return meal;
@@ -49,13 +48,15 @@ function addMeal(mealData, random = false) {
   const btn = meal.querySelector(".meal-body .fav-btn");
 
   btn.addEventListener("click", () => {
-    if(btn.classList.contains("active")){
+    if (btn.classList.contains("active")){
       removeMealLS(mealData.idMeal)
       btn.classList.remove("active");
     } else {
       addMealLS(mealData.idMeal)
       btn.classList.add("active");
     }
+
+    fetchFavMeals();
   });
 
   meals.appendChild(meal);
@@ -79,8 +80,37 @@ function getMealsLS() {
   return mealIds === null ? [] : mealIds;
 }
 
-function fetchFavMeals() {
+async function fetchFavMeals() {
+  // clean container
+  favoriteContainer.innerHTML = "";
+
   const mealIds = getMealsLS();
 
+  for(let i = 0; i < mealIds.length; i++) {
+    const mealId = mealIds[i];
+    meal = await getMealById(mealId);
 
+    addMealFav(meal);
+  }
+}
+
+function addMealFav(mealData) {
+
+  const favMeal = document.createElement('li');
+
+  favMeal.innerHTML = `
+      <img src="${mealData.strMealThumb}" alt="${mealData.strMeal}"/>
+      <span>${mealData.strMeal}</span>
+      <button class="clear"><i class="fas fa-window-close"></i></button>
+  `;
+
+  const btn = favMeal.querySelector('.clear');
+
+  btn.addEventListener('click', () => {
+    removeMealLS(mealData.idMeal);
+
+    fetchFavMeals();
+  });
+
+  favoriteContainer.appendChild(favMeal);
 }
